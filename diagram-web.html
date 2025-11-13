@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cooling Towers, Chillers, and CHWP Drawing</title>
+  <style>
+    svg {
+      border: 1px solid #000;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="app">
+    <form id="coolingTowersForm">
+      <!-- Working Section -->
+      <div id="WorkingSection">
+        <h1>Working</h1>
+        <fieldset>
+          <legend>Cooling Tower Configuration</legend>
+          <label for="numTowers">Number of Cooling Towers:</label>
+          <input type="number" id="numTowers" name="numTowers" min="1" value="2">
+        </fieldset>
+        <br>
+
+        <fieldset>
+          <legend>Cooling Tower (TR)</legend>
+          <label for="numCTTR"> Cooling Tower Capacity TR:</label>
+          <input type="number" id="numCTTRWORKING" name="numCTTRWORKING" min="1" value="2">
+      </fieldset>
+      <br>
+
+        <fieldset>
+          <legend>Chiller Configuration</legend>
+          <label for="numChillers">Number of Chillers:</label>
+          <input type="number" id="numChillers" name="numChillers" min="1" value="3">
+        </fieldset>
+        <br>
+
+        <fieldset>
+          <legend>Capacity of Compressor (TR)</legend>
+          <label for="numTR">Capacity of Compressor TR:</label>
+          <input type="number" id="numTRWORKING" name="numTRWORKING" min="10" max="400" value="20">
+      </fieldset>
+      <br>
+
+        <fieldset>
+          <legend>CHWP Configuration</legend>
+          <label for="numCHWPs">Number of CHWP Pumps:</label>
+          <input type="number" id="numCHWPs" name="numCHWPs" min="1" value="3">
+        </fieldset>
+        <br>
+        <!--TR-->
+        <fieldset>
+            <legend>Kw/TR</legend>
+            <label for="numKwTR">Kw TR:</label>
+            <select id="numKwTR">
+              <option value="0.6">0.6</option>
+              <option value="0.7">0.7</option>
+              <option value="0.8">0.8</option>
+            </select>
+        </fieldset>
+      
+      </div>
+
+      <!-- Stand By Section -->
+      <div id="standbyCoolingTowerSection">
+        <h2>Stand By</h2>
+        <fieldset>
+          <legend>Cooling Tower Configuration (S)</legend>
+          <label for="numTowersStandby">Number of Cooling Towers (S):</label>
+          <input type="number" id="numTowersStandby" name="numTowersStandby" min="1" value="3">
+        </fieldset>
+      </div>
+      <br>
+
+      <!--TR-->
+      <div id="CTTR">
+        <fieldset>
+            <legend>Cooling Tower Capacity (TR)</legend>
+            <label for="numCTTR"> Cooling Tower Capacity TR:</label>
+            <input type="number" id="numCTTRSTANDBY" name="numCTTRSTANDBY" min="1" value="2">
+        </fieldset>
+      </div>
+      <br>
+
+      <!-- Standby Chillers Section -->
+      <div id="standbyChillersSection">
+        <fieldset>
+          <legend>Chiller Configuration (S)</legend>
+          <label for="numChillersStandby">Number of Standby Chillers:</label>
+          <input type="number" id="numChillersStandby" name="numChillersStandby" min="1" value="3">
+        </fieldset>
+      </div>
+      <br> 
+
+      <!--TR-->
+      <div id="TR">
+        <fieldset>
+            <legend>Capacity of Compressor (TR)</legend>
+            <label for="numTR">Capacity of Compressor TR:</label>
+            <input type="number" id="numTRSTANDBY" name="numTRSTANDBY" min="10" max="400" value="20">
+        </fieldset>
+      </div>
+      <br>
+
+      <!-- Standby CHWPs Pump Section -->
+      <div id="standbyCHWPsSection">
+        <fieldset>
+          <legend>CHWP Configuration (S)</legend>
+          <label for="numCHWPsStandby">Number of Standby CHWP Pumps:</label>
+          <input type="number" id="numCHWPsStandby" name="numCHWPsStandby" min="1" value="3">
+        </fieldset>
+      </div>
+      <br>
+      <!--Air Handling Unit-->
+      <div id="AHU">
+        <fieldset>
+            <legend>AHU</legend>
+            <label for="numAHU"> Number of AHU:</label>
+            <input type="number" id="numAHU" name="numAHU" min="1" value="2">
+        </fieldset>
+      </div>
+      <br>
+      
+        <button type="button" onclick="generateDrawing()">Generate Drawing</button>
+    </form>
+  </div>
+  <script>
+
+    // Fixed X, Y coordinates for each component
+    
+    // Fixed X, Y coordinates for Cooling Tower
+    const startX = 70;
+    const startY = 20;
+    
+    // Fixed X, Y coordinates for Chiller
+    const startXChillers = 145;
+    const startYChillers = 100;
+    
+    // Fixed X, Y coordinates for CHWP Pump
+    const startXCHWPs = 710;
+    const startYCHWPs = 370;
+    
+    // Fixed X, Y coordinates for Standby Cooling tower
+    const startXStandby = 1030;
+    const startYStandby = 20;
+    
+    // Fixed X, Y coordinates for Standby Chiller
+    const startXChillersStandby = 1300;
+    const startYChillersStandby = 20;
+
+    // Fixed X, Y coordinates for Standby CHWP Pump
+    const startXCHWPsStandby = 525;
+    const startYCHWPsStandby = 370;
+
+    // Fixed X, Y coordinates for AHU
+    const startXAHU = 1500;
+    const startYAHU = 280;
+
+    function getFieldValue(fieldId) {
+    return document.getElementById(fieldId).value;
+      
+    }
+
+    function generateDrawing() {
+    // Get the input values
+    const numTowers = parseInt(getFieldValue('numTowers'));
+    const numChillers = parseInt(getFieldValue('numChillers'));
+    const numCHWPs = parseInt(getFieldValue('numCHWPs'));
+    const numTowersStandby = parseInt(getFieldValue('numTowersStandby'));
+    const numChillersStandby = parseInt(getFieldValue('numChillersStandby'));
+    const numCHWPsStandby = parseInt(getFieldValue('numCHWPsStandby'));
+    const numAHU = parseInt(getFieldValue('numAHU'));
+
+    // get the STANDBY tr input values
+    const numKwTR = parseFloat(getFieldValue('numKwTR'));
+    const numCCompressorTRSTANDBY = parseInt(getFieldValue('numTRSTANDBY'));
+    const numCTTRSTANDBY = parseFloat(getFieldValue('numCTTRSTANDBY'));
+
+
+    // get the WORKING tr input values
+    const numCCompressorTRWORKING = parseFloat(getFieldValue('numTRWORKING'));
+    const numCTTRWORKING = parseFloat(getFieldValue('numCTTRWORKING'));
+    
+
+    // Generate SVG code for components
+    const towersSVG = generateTowersSVG(numTowers, startX, startY);
+    const chillersSVG = generateChillersSVG(numChillers, startXChillers, startYChillers);
+    const endYEvaporatorToAHU = startYChillers + (numChillers * 160) + 100; // Calculate the end Y coordinate
+    const chwpSVG = generateChwpSVG(numCHWPs, startXCHWPs, startYChillers, numChillers, endYEvaporatorToAHU, numChillersStandby, startXChillersStandby, startYChillersStandby);
+
+    // Generate SVG code for standby components
+    const standbyTowersSVG = generateStandbyTowersSVG(numTowersStandby, startXStandby, startYStandby);
+    const standbyChillersSVG = generateStandbyChillersSVG(numChillers, numChillersStandby, startXChillersStandby, startYChillersStandby);
+    const standbyCHWPsSVG = generateStandbyCHWPsSVG(numCHWPsStandby, startXCHWPsStandby, numChillersStandby, numCHWPs, startXCHWPs, startYChillers, endYEvaporatorToAHU);
+
+    // Generate SVG code for AHU
+     const AHU = generateAHUSVG(numAHU, startXAHU, startYAHU, numChillersStandby, numCHWPsStandby);
+    
+    // Calculate the maximum X and Y coordinates
+    const maxX = Math.max(startX + numTowers * 120, startXChillers, startXCHWPs + numCHWPs * 120, startXStandby + numTowersStandby * 120, startXChillersStandby, startXCHWPsStandby + numCHWPsStandby * 120, startXAHU);
+    const maxY = Math.max(startY + 200, startYChillers + numChillers * 160, startYCHWPs + numCHWPs * 120, startYStandby + 200, startYChillersStandby + numChillersStandby * 160, startYCHWPsStandby + numCHWPsStandby * 120, startYAHU + numAHU * 120);
+
+    // Set the width and height of the SVG canvas
+    const svgWidth = 1800; // Fixed width
+    const svgHeight = 2000; // Fixed height
+    
+    // Calculate the scaling factor
+    const scaleX = svgWidth / (maxX + 1000);
+    const scaleY = svgHeight / (maxY + 1000);
+    const scale = Math.min(scaleX, scaleY) * 1.25; // Increase the scale by 20%
+
+
+    
+
+
+
+
+       // STARTING TABLE DIAGRAM
+
+
+      let kilowattCC = numKwTR * numCCompressorTRSTANDBY;
+      let kilocaloriesCC = kilowattCC * 860.42;
+      
+      
+      let numOfCoolingTowerTRSTANDBY = numCTTRSTANDBY * 3024;
+      let numOfCoolingTowerSTANDBY = numTowersStandby;
+
+      // CWp calculation
+
+      let massFlowRate  = kilocaloriesCC + numOfCoolingTowerTRSTANDBY;
+ 
+      let totalCoolingLoad = massFlowRate * 1 * 4;
+      let massFlowRateLPH = totalCoolingLoad / 4;
+      let LPHSTANDBY = massFlowRateLPH / 4;
+
+      let KWSTANDBY = 0.00011099 * LPHSTANDBY -
+         6.743 * Math.pow(10, -10) * Math.pow(LPHSTANDBY, 2) +
+         3.632 * Math.pow(10, -15) * Math.pow(LPHSTANDBY, 3) +
+         0.1718;
+
+
+      // CHWP calculation
+
+      
+      let totalCoolingLoadCHWP = massFlowRate * 1 * 5.5;
+      let massFlowRateLPHCHWP = totalCoolingLoadCHWP / 5.5;
+      let LPHSTANDBYCHWP = massFlowRateLPHCHWP / 5.5;
+
+      const KMSTANDBYCHWP = 0.00011099 * LPHSTANDBYCHWP - 6.743 * Math.pow(10, -10) * Math.pow(LPHSTANDBYCHWP, 2) + 3.632 * Math.pow(10, -15) * Math.pow(LPHSTANDBYCHWP, 3) + 0.1718;
+
+
+
+
+      // same calculation for working
+
+
+
+      let kilowattCCWORKING = numKwTR * numCCompressorTRWORKING;
+      let kilocaloriesCCWORKING = kilowattCCWORKING * 860.42;
+      
+      
+      let numOfCoolingTowerTRWORKING = numCTTRWORKING * 3024;
+      let numOfCoolingTowerWORKING = numTowers;
+
+      // CWp calculation
+
+      let massFlowRateWORKING  = kilocaloriesCCWORKING + numOfCoolingTowerTRWORKING;
+      let totalCoolingLoadWORKING = massFlowRateWORKING * 1 * 4;
+      let massFlowRateLPHWORKING = totalCoolingLoadWORKING / 4;
+      let LPHWORKING = massFlowRateLPHWORKING / 4;
+
+      let KWWORKING = 0.00011099 * LPHWORKING -
+         6.743 * Math.pow(10, -10) * Math.pow(LPHWORKING, 2) +
+         3.632 * Math.pow(10, -15) * Math.pow(LPHWORKING, 3) +
+         0.1718;
+
+
+      // CHWP calculation
+
+      
+      let totalCoolingLoadCHWPWORKING = massFlowRateWORKING * 1 * 5.5;
+      let massFlowRateLPHCHWPWORKING = totalCoolingLoadCHWPWORKING / 5.5;
+      let LPHCHWPWORKING = massFlowRateLPHCHWPWORKING / 5.5;
+
+      const KWCHWPWORKING = 0.00011099 * LPHCHWPWORKING - 6.743 * Math.pow(10, -10) * Math.pow(LPHCHWPWORKING, 2) + 3.632 * Math.pow(10, -15) * Math.pow(LPHCHWPWORKING, 3) + 0.1718;
+
+
+
+
+
+    // STARTING ELECTRIC DIAGRAM
+
+
+        // Calculate the maximum X and Y coordinates
+    const maxXElectric = Math.max(10 + numCHWPs * 260 + numChillers * 260);
+    const maxYElectric = Math.max(10 + numCHWPs * 260 + numChillers * 260);
+
+    // Set the width and height of the SVG canvas
+    const svgWidthElectric = 4000; // Fixed width
+    const svgHeightElectric = 2000; // Fixed height
+    
+    // Calculate the scaling factor
+    const scaleXElectric = svgWidthElectric / (maxXElectric + 1000);
+    const scaleYElectric = svgHeightElectric / (maxYElectric + 1000);
+    const scaleElectric = Math.min(scaleXElectric, scaleYElectric) * 1.25; // Increase the scale by 20%
+
+
+    const cwpEelectricSVG = generateElectricCwpSVG(numChillers, startXCHWPs, startYChillers);
+    const chillerEelectricSVG = generateElectricChillersSVG(numChillers, startXCHWPs, startYChillers, numChillers, endYEvaporatorToAHU);
+    const coolingTowersElectricSVG = generateElectricCoolingTowerssSVG(numTowers, numChillers, startXCHWPs, startYChillers, numChillers, endYEvaporatorToAHU);
+    const chwpElectricSVG = generateElectricChwpSVG(numCHWPs, startXCHWPs, startYChillers);
+    const standbyElectricCoolingTowerSVG = generateElectricStandByChillersCoolingTowersSVG(numTowersStandby, numCHWPs, startXChillersStandby);
+    const standbyElectricChillersSVG = generateElectricStandByChillersSVG(numChillersStandby, numCHWPs, numTowersStandby, startXChillersStandby);
+    const standbyElectricCwpSVG = generateElectricStandByCwpSVG(numChillersStandby, numTowersStandby, numCHWPs, startXChillersStandby);
+    const standbyElectricChwpSVG = generateElectricStandByChwpSVG(numChillersStandby, numCHWPsStandby, numCHWPs, numTowersStandby, startXChillersStandby);
+
+
+
+    // Append SVG code to the existing SVG code
+    const newTab = window.open();
+    newTab.document.body.innerHTML = `
+    <svg width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${(maxX + 1000) / scale} ${(maxY + 1000) / scale}">
+    <g transform="translate(0, 0) scale(${scale})">
+    ${towersSVG}
+    ${chillersSVG}
+    ${chwpSVG}
+    ${standbyTowersSVG}
+    ${standbyChillersSVG}
+    ${standbyCHWPsSVG}
+    ${AHU}
+    </g>
+    </svg>
+    `;
+
+    // Append SVG code to the existing SVG code
+    const electricDiagramTab = window.open();
+    electricDiagramTab.document.body.innerHTML = `
+    <div class="container" style="width: 90%; height: 90%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 1px solid #ccc; overflow: auto; padding: 30px;">
+    <svg width="${svgWidthElectric}" height="${svgHeightElectric}" viewBox="0 0 ${(maxXElectric + 500) / scaleElectric} ${(maxYElectric + 2000) / scaleElectric}">
+    ${cwpEelectricSVG}
+    ${chillerEelectricSVG}
+    ${coolingTowersElectricSVG}
+    ${chwpElectricSVG}
+    ${standbyElectricCoolingTowerSVG}
+    ${standbyElectricChillersSVG}
+    ${standbyElectricCwpSVG}
+    ${standbyElectricChwpSVG}
+  
+    </svg>
+    </div>
+    `;
+
+
+// Open a new tab for table
+const newTableTab = window.open();
+
+// Get the generated table HTML
+const htmlTable = generateTable(numChillers, numCHWPs, numOfCoolingTowerWORKING, numCTTRWORKING, numCCompressorTRWORKING, LPHWORKING, KWWORKING, LPHCHWPWORKING, KWCHWPWORKING, numOfCoolingTowerSTANDBY, numCTTRSTANDBY, numCCompressorTRSTANDBY, LPHSTANDBY, KWSTANDBY, LPHSTANDBYCHWP, KMSTANDBYCHWP, numChillersStandby, numCHWPsStandby);
+
+// Insert the generated table into the new tab
+newTableTab.document.body.innerHTML = `
+    <div class="container" style="width: 90%; height: 90%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 1px solid #ccc; overflow: auto; padding: 30px;">
+        ${htmlTable}
+    </div>
+`;
+      
+    }
+
+    // Function to generate Tower
+    function generateTowersSVG(numTowers, startX, startY) {
+        let svgCode = '';
+        let additional_line = '';
+        for (let i = 0; i < numTowers; i++) {
+            const xOffset = i * 120;
+            const currentX = startX + xOffset;
+
+            if(i != 0){
+
+              additional_line = '<line x1="' + (currentX - 100) + '" y1="' + (startY + 170) + '" x2="' + (currentX + 20) + '" y2="' + (startY + 170) + '" stroke="#000" stroke-width="2" />';
+
+            }
+
+            svgCode += `
+            <!-- Cooling Tower ${i + 1} -->
+            <!-- Trapezoidal Shape -->
+            <line x1="${currentX}" y1="${startY}" x2="${currentX + 40}" y2="${startY}" stroke="#000" stroke-width="2" />
+            <line x1="${currentX}" y1="${startY}" x2="${currentX - 10}" y2="${startY + 80}" stroke="#000" stroke-width="2" />
+            <line x1="${currentX + 40}" y1="${startY}" x2="${currentX + 50}" y2="${startY + 80}" stroke="#000" stroke-width="2" />
+            <line x1="${currentX - 10}" y1="${startY + 80}" x2="${currentX + 50}" y2="${startY + 80}" stroke="#000" stroke-width="2" />
+            
+            <!-- Circles for Air Flow -->
+            <circle cx="${currentX + 20}" cy="${startY + 20}" r="2" fill="#000"/>
+            
+            <!-- Horizontal Line from Circles for Air Flow -->
+            <line x1="${currentX + 20}" y1="${startY + 20}" x2="${currentX + 70}" y2="${startY + 20}" stroke="#000" stroke-width="2" />
+            
+            <!-- Lines representing Condenser Water -->
+            <line x1="${currentX + 20}" y1="${startY + 80}" x2="${currentX + 20}" y2="${startY + 170}" stroke="#000" stroke-width="2" />
+            
+            <!-- Draw the arrowhead -->
+            <polygon points="${currentX + 20},${startY + 160} ${currentX + 25},${startY + 150} ${currentX + 15},${startY + 150}" fill="black"/>
+            
+            ${additional_line}
+            
+            <!--Line connecting cooling Tower to Condenser-->
+            <line x1="${currentX + 70}" y1="${startY + 20}" x2="${currentX + 70}" y2="${startY + 120}" stroke="#000" stroke-width="2" stroke-dasharray="5,5" />
+           
+            <!--Line connecting cooling tower top to condenser -->
+            <line x1="${currentX - 44}" y1="${startY + 120}" x2="${currentX + 71}" y2="${startY + 120}" stroke="black" stroke-width="2" stroke-dasharray="5,5" />
+            `;
+
+        }
+        return svgCode;
+    }
+
+    // Function to generate Chiller
+    function generateChillersSVG(numChillers, startXChillers, startYChillers) {
+    let svgCode = '';
+    let currentX = 0;
+    let svgLine = '';
+    const chillerHeight = 150; // Height of each chiller
+    const endYEvaporatorToAHU = startYChillers + (numChillers * chillerHeight) + 100; // Calculate the end Y coordinate
+
+
+    for (let i = 0; i < numChillers; i++) {
+        currentX = startXChillers;
+        const yOffset = i * chillerHeight;
+        const currentY = startYChillers + yOffset;
+
+        // Add the line only if it's not the last index
+        
+        if (numChillers > 1){
+        if (i !== numChillers - 1) {
+          svgLine = `<line x1="25" y1="${currentX}" x2="25" y2="${currentY + 385}" stroke="#666" stroke-width="2" stroke-dasharray="5,5" />`;
+         }
+        }else{
+          svgLine = `<line x1="25" y1="${currentX}" x2="25" y2="${currentY + 235}" stroke="#666" stroke-width="2" stroke-dasharray="5,5" />`;
+        }
+        
+          svgCode += `
+            <!-- Chiller ${i + 1} -->
+            <!--Line connecting condenser to pump-->
+            <line x1="${currentX + 220}" y1="${currentY + 235}" x2="${currentX + 60}" y2="${currentY + 235}" stroke="black" stroke-width="2" />
+            
+            <!--Line connecting condenser to cooling tower top-->
+            <line x1="${currentX - 15}" y1="${currentY + 235}" x2="${currentX - 120}" y2="${currentY + 235}" stroke="black" stroke-width="2" stroke-dasharray="5,5" />
+            
+            ${svgLine}
+
+            <!-- Condenser -->
+            <rect x="${currentX - 25}" y="${currentY + 220}" width="100" height="30" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- TEXT CONDENSER -->
+            <text x="${currentX - 15}" y="${currentY + 240}" font-family="Arial" font-size="13" fill="#000">CONDENSER</text>
+            
+            <!-- Evaporator -->
+            <rect x="${currentX - 25}" y="${currentY + 290}" width="100" height="30" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- TEXT EVAPORATOR -->
+            <text x="${currentX - 16}" y="${currentY + 310}" font-family="Arial" font-size="13" fill="#000">EVAPORATOR</text>
+            
+            <!-- Compressor -->
+            <circle cx="${currentX + 25}" cy="${currentY + 270}" r="20" fill="#fff" stroke="#000" stroke-width="2" />
+            
+            <!-- Triangle inside Compressor -->
+            <polygon points="${currentX + 25},${currentY + 251} ${currentX + 41},${currentY + 280} ${currentX + 9},${currentY + 280}" fill="#fff" stroke="#000" stroke-width="2" />
+            
+            <!-- Solid Horizontal Line Evaporator To AHU -->
+            <line x1="${currentX + 75}" y1="${currentY + 290}" x2="${currentX + 705}" y2="${currentY + 290}" stroke="black" stroke-width="2" />
+            <line x1="${currentX + 705}" y1="${currentY + 440}" x2="${currentX + 705}" y2="${currentY + 290}" stroke="black" stroke-width="2" />
+
+            <!-- line to AHU -->
+            
+            
+            <!--Line connecting Evaporator To AHU-->
+            <line x1="${currentX + 75}" y1="${currentY + 320}" x2="${currentX + 580}" y2="${currentY + 320}" stroke="black" stroke-width="2" stroke-dasharray="5,5" />
+            
+            <!--Line Vertical connecting Evaporator To AHU in chillers-->
+            <line x1="${currentX + 580}" y1="${currentY + 320}" x2="${currentX + 580}" y2="${currentY + 1000}" stroke="black" stroke-width="2" stroke-dasharray="5,5" />
+            
+            <!-- Flow Sensor A -->
+            <!-- Outer Rectangle -->
+            <rect x="${currentX + -80}" y="${currentY + 230}" width="10" height="25" fill="lightgray" stroke="black" stroke-width="2" />
+            <!-- Center Line -->
+            <line x1="${currentX + -75}" y1="${currentY + 255}" x2="${currentX + -75}" y2="${currentY + 220}" stroke="black" stroke-width="2" />
+            
+            <!-- Flow Sensor 1 -->
+            <!-- Outer Rectangle -->
+            <rect x="${currentX + 95}" y="${currentY + 215}" width ="10" height="25" fill="lightgray" stroke="black" stroke-width="2" />
+            <!-- Center Line -->
+            <line x1="${currentX + 100}" y1="${currentY + 240}" x2="${currentX + 100}" y2="${currentY + 205}" stroke="black" stroke-width="2" />
+            
+            <!-- Bypass Valve -->
+            <circle cx="${currentX + 155}" cy="${currentY + 235}" r="15" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- Incline Line -->
+            <line x1="${currentX + 155}" y1="${currentY + 260}" x2="${currentX + 145}" y2="${currentY + 215}" transform="rotate(30 ${currentX + 155} ${currentY + 245})" stroke="black" stroke-width="2" />
+            <line x1="${currentX + 160}" y1="${currentY + 218}" x2="${currentX + 185}" y2="${currentY + 218}" transform="rotate(25 ${currentX + 180} ${currentY + 166})" stroke="black" stroke-width="2" />
+            
+            <!-- Pump 1 -->
+            <!-- Triangle Base -->
+            <polygon points="${currentX + 235},${currentY + 235} ${currentX + 215},${currentY + 260} ${currentX + 255},${currentY + 260}" fill="#fff" stroke="#000" stroke-width="2"/>
+            <!-- Circle -->
+            <circle cx="${currentX + 235}" cy="${currentY + 240}" r="15" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- Rectangle on Circumference -->
+            <rect x="${currentX + 197}" y="${currentY + 225}" width="40" height="15" transform="rotate(0 ${currentX + 235} ${currentY + 265})" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- Inner Circle -->
+            <circle cx="${currentX + 235}" cy="${currentY + 240}" r="12" fill="#fff" stroke="#fff" stroke-width="2" />
+            
+            <!-- Flow Sensor 2 -->
+            <!-- Outer Rectangle -->
+            <rect x="${currentX + 95}" y="${currentY + 270}" width="10" height="25" fill="lightgray" stroke="black" stroke-width="2" />
+            <!-- Center Line -->
+            <line x1="${currentX + 100}" y1="${currentY + 295}" x2="${currentX + 100}" y2="${currentY + 260}" stroke="black" stroke-width="2" />
+            
+            <!-- Flow Sensor 3 -->
+            <!-- Outer Rectangle -->
+            <rect x="${currentX + 120}" y="${currentY + 310}" width="10" height="25" fill="lightgray" stroke="black" stroke-width="2" />
+            <!-- Center Line -->
+            <line x1="${currentX + 125}" y1="${currentY + 335}" x2="${currentX + 125}" y2="${currentY + 300}" stroke="black" stroke-width="2" />
+            
+            <!--Line connecting pump 1 to cooling Tower-->
+            <!-- Solid Horizontal Line from Pump 1 chillers 1 -->
+            <line x1="${currentX + 250}" y1="${currentY + 240}" x2="${currentX + 425}" y2="${currentY + 240}" stroke="black" stroke-width="2" />
+            <!-- Solid Vertical Line from Pump 1 -->
+            <line x1="${currentX + 425}" y1="${currentY + 240}" x2="${currentX + 425}" y2="${currentY + 90}" stroke="black" stroke-width="2" />
+            `;
+          }
+
+
+          svgCode += `
+            
+          <!--Additional line connecting Condenser Water to Pump 1-->
+            <line x1="${currentX + 50}" y1="${startY + 170}" x2="${currentX + 425}" y2="${startY + 170}" stroke="#000" stroke-width="2" />
+      
+            `;
+
+          return svgCode;
+        }
+
+    // Function to generate CHWP Pump
+    function generateChwpSVG(numCHWPs, startXCHWPs, startYChillers, numChillers, endYEvaporatorToAHU, numChillersStandby, startXChillersStandby, startYChillersStandby) {
+    let svgCode = '';
+    const ChillerHeight = 160; // Height of each chiller
+    const ChillerStartY = startYChillers; // Y coordinate of the first chiller
+    const startYCHWPs = endYEvaporatorToAHU + 70; // Calculate the starting Y for CHWPs based on the end Y of the Evaporator to AHU line
+
+    // start chillers
+
+    let currentXTower;
+    let currentYTower;
+    numChillers = numChillers + 1;
+      for (let i = 0; i < numChillers; i++) {
+          currentXTower = startXChillersStandby;
+          const yOffset = i * 160;
+          currentYTower = startYChillersStandby + yOffset;
+      }
+
+    // end chillers
+
+    // stand standby chillers
+    let currentXStandBy;
+    let currentYStandBy;
+    const ChillerHeightStandBy = 150; // Height of each chiller
+    for (let i = 0; i < numChillersStandby; i++) {
+        const currentXStandBy = 25;
+        const yOffset = i * ChillerHeightStandBy;
+        currentYStandBy =  yOffset;
+
+    }
+
+    // end standby chillers
+
+
+    for (let i = 0; i < numCHWPs; i++) {
+        const currentX = startXCHWPs;
+        const yOffset = i * 120;
+        const currentY = startYCHWPs + yOffset;
+
+       
+
+        svgCode += `
+        <!-- CHWP Pump ${i + 1} -->
+      
+        <!-- Solid Horizontal Line from CHWP Pump 1 -->
+        <line x1="${currentX + 15}" y1="${currentYStandBy + currentY + 610}" x2="${currentX + 145}" y2="${currentYStandBy + currentY + 610}" stroke="#000" stroke-width="2" />
+
+        <!--Line Vertical connecting CHWP Pump 1 To CHWP Pump 2-->
+        <line x1="${currentX + 15}" y1="${currentYStandBy + currentY + 605}" x2="${currentX + 15}" y2="${currentYStandBy + endYEvaporatorToAHU + 605}" stroke="#000" stroke-width="2" stroke-dasharray="5,5" />
+
+        <g transform="translate(${currentX},${currentYStandBy + currentY - 300})">
+            <!-- Flow Sensor 4 -->
+            <!-- Outer Rectangle -->
+            <rect x="40" y="900" width="10" height="25" fill="lightgray" stroke="black" stroke-width="2"/>
+            <!-- Center Line -->
+            <line x1="45" y1="925" x2="45" y2="890" stroke="black" stroke-width="2"/>
+
+            <!-- Bypass Valve -->
+            <circle cx="95" cy="910" r="15" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- Incline Line -->
+            <line x1="390" y1="785" x2="375" y2="735" transform="rotate(30 -35 295)" stroke="black" stroke-width="2"/>
+            <line x1="375" y1="772" x2="350" y2="768" transform="rotate(25 -12 210)" stroke="black" stroke-width="2"/>
+
+            <!-- Pump 2-->
+            <!-- Triangle Base -->
+            <polygon points="175,910 155,935 195,935" fill="#fff" stroke="#000" stroke-width="2"/>
+            <!-- Circle -->
+            <circle cx="175" cy="915" r="15" fill="#fff" stroke="#000" stroke-width="2"/>
+            <!-- Rectangle on Circumference -->
+            <rect x="130" y="900" width="40" height="15" transform="rotate(0 50 50)" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- Inner Circle -->
+            <circle cx="175" cy="914" r="12" fill="#fff" stroke="#fff" stroke-width="2" />
+
+            <!--Line connecting Evaporator To AHU-->
+            <line x1="190" y1="910" x2="300" y2="910" stroke="black" stroke-width="2" stroke-dasharray="5,5"></line>
+            
+            <!--Line Vertical connecting Evaporator To AHU in chwp-->
+            <line x1="300" y1="909" x2="300" y2="1031" stroke="black" stroke-width="2" stroke-dasharray="5,5"></line>
+            
+        </g>
+        
+        `;
+
+      
+
+    }
+    return svgCode;
+}
+
+    // Function to generate standby cooling towers
+    function generateStandbyTowersSVG(numTowers, startX, startY) {
+    let svgCode = '';
+    for (let i = 0; i < numTowers; i++) {
+        const xOffset = i * 120;
+        const currentX = startX + xOffset;
+        const isLastIndex = (i === 0);
+        const x2Value = isLastIndex ? currentX - 70 : currentX - 100;
+
+        svgCode += `
+        
+          <!-- Cooling Tower (S) ${i + 1} -->
+          <!-- Trapezoidal Shape -->
+          <line x1="${currentX}" y1="${startY}" x2="${currentX + 40}" y2="${startY}" stroke="#666" stroke-width="2" />
+          <line x1="${currentX}" y1="${startY}" x2="${currentX - 10}" y2="${startY + 80}" stroke="#666" stroke-width="2" />
+          <line x1="${currentX + 40}" y1="${startY}" x2="${currentX + 50}" y2="${startY + 80}" stroke="#666" stroke-width="2" />
+          <line x1="${currentX - 10}" y1="${startY + 80}" x2="${currentX + 50}" y2="${startY + 80}" stroke="#666" stroke-width="2" />
+
+          <!-- Circles for Air Flow -->
+          <circle cx="${currentX + 20}" cy="${startY + 20}" r="2" fill="#666"/>
+
+          <!-- Horizontal Line from Circles for Air Flow -->
+          <line x1="${currentX + 20}" y1="${startY + 20}" x2="${currentX + 70}" y2="${startY + 20}" stroke="#666" stroke-width="2" />
+
+          <!-- Lines representing Condenser Water -->
+          <line x1="${currentX + 20}" y1="${startY + 80}" x2="${currentX + 20}" y2="${startY + 140}" stroke="#666" stroke-width="2" />
+
+          <!--Additional line connecting Condenser Water to Pump 1-->
+          <line x1="${currentX + 20}" y1="${startY + 140}" x2="${x2Value}" y2="${startY + 140}" stroke="#666" stroke-width="2" />
+
+          <!-- Draw the arrowhead -->
+          <polygon points="${currentX + 20},${startY + 120} ${currentX + 25},${startY + 110} ${currentX + 15},${startY + 110}" fill="#666"/>
+          
+          <!--Line connecting cooling Tower to Condenser-->
+          <line x1="${currentX + 70}" y1="${startY + 20}" x2="${currentX + 70}" y2="${startY + 120}" stroke="#666" stroke-width="2" stroke-dasharray="5,5" />
+          <line x1="${currentX + 70}" y1="${startY + 120}" x2="${currentX - 125}" y2="${startY + 120}" stroke="#666" stroke-width="2" stroke-dasharray="5,5" />
+       
+        `;
+    }
+    return svgCode;
+}
+
+
+    // Function to generate Standby Chillers
+    function generateStandbyChillersSVG(numTowerChillers, numChillersStandby, startXChillers, startYChillers) {
+      let svgCode = '';
+      let currentXTower;
+      let currentYTower;
+      numTowerChillers = numTowerChillers + 2;
+        for (let i = 0; i < numTowerChillers; i++) {
+          currentXTower = startXChillers
+          const yOffset = i * 160;
+          currentYTower = startYChillers + yOffset;
+          svgCode += `
+            <!-- Standby Chiller (S) ${i + 1} -->
+            <!--Line connecting condenser to cooling tower top-->
+            <line x1="${currentXTower - 395}" y1="${currentYTower + 280}" x2="${currentXTower - 395}" y2="${currentYTower + 120}" stroke="#666" stroke-width="2" stroke-dasharray="5,5" />
+            <line x1="${currentXTower - 340}" y1="${currentYTower + 300}" x2="${currentXTower - 340}" y2="${currentYTower + 140}" stroke="black" stroke-width="2" />
+
+            `;
+          }
+
+          svgCode += `
+            
+            <!-- Solid Horizontal Line from Pump 1 standby chillers 1 -->
+            <line x1="905" y1="${currentYTower + 280}" x2="25" y2="${currentYTower + 280}" stroke="#666" stroke-width="2" stroke-dasharray="5,5" />
+            <line x1="25" y1="${currentYTower + 280}" x2="25" y2="${currentYTower + 400}" stroke="#666" stroke-width="2" stroke-dasharray="5,5" />
+      
+            `;
+
+            // AHU line
+            svgCode += `
+            <line x1="850" y1="${currentYTower + 370}" x2="1400" y2="${currentYTower + 370}" stroke="red" stroke-width="2"></line>
+            <!-- TEXT AHU -->
+            <text x="1410" y="${currentYTower + 375}" font-family="Arial" font-size="15" fill="#000">To AHU</text>
+            `;
+
+
+            
+          const chillerHeight = 150; // Height of each chiller
+          const endYEvaporatorToAHU = startYChillers + (numChillersStandby * chillerHeight) + 100; // Calculate the end Y coordinate
+
+    for (let i = 0; i < numChillersStandby; i++) {
+        const currentX = 25;
+        const yOffset = i * chillerHeight;
+        const currentY = currentYTower + yOffset;
+
+          svgCode += `
+            <!-- Chiller ${i + 1} -->
+            
+            <!--Line connecting condenser to cooling tower top-->
+            <line x1="${currentX}" y1="${currentY + 470}" x2="${currentX + 75}" y2="${currentY + 470}" stroke="#666" stroke-width="2" stroke-dasharray="5,5" />
+            
+            <line x1="25" y1="${currentY + 300}" x2="25" y2="${currentY + 470}" stroke="#666" stroke-width="2" stroke-dasharray="5,5" />
+
+            <rect x="${currentX + 15}" y="${currentY + 460}" width="10" height="25" fill="lightgray" stroke="black" stroke-width="2" />
+            <!-- Center Line -->
+            <line x1="${currentX + 20}" y1="${currentY + 450}" x2="${currentX + 20}" y2="${currentY + 485}" stroke="black" stroke-width="2" />
+
+            <!-- Condenser -->
+            <rect x="${currentX + 50}" y="${currentY + 455}" width="100" height="30" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- TEXT CONDENSER -->
+            <text x="${currentX + 60}" y="${currentY + 475}" font-family="Arial" font-size="13" fill="#000">CONDENSER</text>
+            
+            <!-- Evaporator -->
+            <rect x="${currentX + 50}" y="${currentY + 525}" width="100" height="30" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- TEXT EVAPORATOR -->
+            <text x="${currentX + 60}" y="${currentY + 545}" font-family="Arial" font-size="13" fill="#000">EVAPORATOR</text>
+
+            <!-- Compressor -->
+            <circle cx="${currentX + 95}" cy="${currentY + 505}" r="20" fill="#fff" stroke="#000" stroke-width="2" />
+
+            <!-- Triangle inside Compressor -->
+            <polygon points="${currentX + 95},${currentY + 486} ${currentX + 111},${currentY + 515} ${currentX + 79},${currentY + 515}" fill="#fff" stroke="#000" stroke-width="2" />
+
+           
+            <!--Line connecting Evaporator To AHU-->
+            <line x1="${currentX + 155}" y1="${currentY + 555}" x2="${currentX + 530}" y2="${currentY + 555}" stroke="black" stroke-width="2" stroke-dasharray="5,5" />
+            
+            <!--Line Vertical connecting Evaporator To AHU in standbychillers 1-->
+            <line x1="${currentX + 530}" y1="${currentY + 555}" x2="${currentX + 530}" y2="${currentY + 1025}" stroke="black" stroke-width="2" stroke-dasharray="5,5" />
+
+            <!--Line Vertical connecting Evaporator To AHU in standbychillers 2-->
+            <line x1="${currentX + 700}" y1="${currentY + 555}" x2="${currentX + 700}" y2="${currentY + 785}" stroke="black" stroke-width="2" stroke-dasharray="5,5" />
+
+
+            <!--Line connecting pump 1 to cooling Tower-->
+            <!-- Solid Horizontal Line from Pump 1 standby chillers 2-->
+            <line x1="${currentX + 150}" y1="${currentY + 470}" x2="${currentX + 935}" y2="${currentY + 470}" stroke="black" stroke-width="2" />
+            <!-- Solid Vertical Line from Pump 1 -->
+            <line x1="${currentX + 935}" y1="${currentY + 470}" x2="${currentX + 935}" y2="${currentY + 280}" stroke="black" stroke-width="2" />
+
+            <!--Line connecting pump 1 to cooling Tower-->
+            <!-- Solid Horizontal Line from Pump 1 standby chillers 3-->
+            <line x1="${currentX + 150}" y1="${currentY + 525}" x2="${currentX + 825}" y2="${currentY + 525}" stroke="black" stroke-width="2" />
+            <!-- Solid Vertical Line from Pump 1 -->
+
+            <line x1="${currentX + 825}" y1="${currentY}" x2="${currentX + 825}" y2="${currentY + 525}" stroke="black" stroke-width="2" />
+
+
+
+            <!-- Bypass Valve -->
+            <circle cx="${currentX + 275}" cy="${currentY + 470}" r="15" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- Incline Line -->
+            <line x1="${currentX + 280}" y1="${currentY + 495}" x2="${currentX + 270}" y2="${currentY + 445}" transform="rotate(25 ${currentX + 280} ${currentY + 465})"  stroke="black" stroke-width="2" />
+            <line x1="${currentX + 284}" y1="${currentY + 428}" x2="${currentX + 260}" y2="${currentY + 428}" transform="rotate(25 ${currentX + 250} ${currentY + 428})" stroke="black" stroke-width="2" />
+
+            <!-- Pump 1 -->
+            <!-- Triangle Base -->
+            <polygon points="${currentX + 365},${currentY + 465} ${currentX + 345},${currentY + 500} ${currentX + 385},${currentY + 500}" fill="#fff" stroke="#000" stroke-width="2"/>
+            <!-- Circle -->
+            <circle cx="${currentX + 365}" cy="${currentY + 479}" r="15" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- Rectangle on Circumference -->
+            <rect x="${currentX + 317}" y="${currentY + 465}" width="40" height="15" transform="rotate(0 ${currentX + 235} ${currentY + 265})" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- Inner Circle -->
+            <circle cx="${currentX + 364}" cy="${currentY + 479}" r="12" fill="#fff" stroke="#fff" stroke-width="2" />
+
+            
+            
+
+            `;
+
+          }
+          
+
+          return svgCode;
+        }
+        
+        // Function to generate Standby CHWPs Pump
+        function generateStandbyCHWPsSVG(numCHWPs, startXCHWPsStandby, numChillersStandby, numCHWPsTop, startXCHWPs, startYChillers, endYEvaporatorToAHU) {
+
+
+
+          let svgCode = '';
+          let currentYTop = 0;
+          let AHUline = '';
+          const standbyChillerHeight = 160; // Height of each standby chiller
+          const standbyChillerStartY = startYChillersStandby; // Y coordinate of the first standby chiller
+          const startYCHWPsStandby = standbyChillerStartY + (numChillersStandby * standbyChillerHeight) + 100; // Calculate the starting Y for standby CHWPs
+
+          // working towers chwp elements
+          const ChillerStartY = startYChillers; // Y coordinate of the first chiller
+          const startYCHWPs = endYEvaporatorToAHU + 70; // Calculate the starting Y for CHWPs based on the end Y of the Evaporator to AHU line
+
+
+          for (let i = 0; i < numCHWPsTop; i++) {
+            const currentX = startXCHWPs;
+            const yOffset = i * 120;
+            currentYTop = startYCHWPs + yOffset;
+          }
+
+          
+          for (let i = 0; i < numCHWPs; i++) {
+            const currentX = startXCHWPsStandby;
+            const yOffset = i * 120;
+            const currentY = startYCHWPsStandby + yOffset;
+
+            if(i == 0){
+              AHUline = `<line x1="1010" y1="${currentYTop + currentY + 470}" x2="1520" y2="${currentYTop + currentY + 470}" stroke="red" stroke-width="2"></line> <text x="1530" y="${currentYTop + currentY + 475}" font-family="Arial" font-size="15" fill="#000">From AHU</text>`;
+            }
+
+            svgCode += `
+            
+            <!-- Solid Horizontal Line from CHWP Pump 1 -->
+            <line x1="${currentX + 30}" y1="${currentYTop + currentY + 610}" x2="${currentX + 340}" y2="${currentYTop + currentY + 610}" stroke="#000" stroke-width="2" />
+
+            <!--Line Vertical connecting CHWP Pump 1 To CHWP Pump 2-->
+            <line x1="${currentX + 30}" y1="${currentYTop + currentY + 610}" x2="${currentX + 30}" y2="${endYEvaporatorToAHU + 1130}" stroke="#000" stroke-width="2" stroke-dasharray="5,5" />
+
+            // AHU line
+            ${AHUline}
+            
+
+            <g transform="translate(${currentX + 185},${currentYTop + currentY - 300})">
+            <!-- Flow Sensor 4 -->
+            <!-- Outer Rectangle -->
+            <rect x="40" y="900" width="10" height="25" fill="lightgray" stroke="black" stroke-width="2"/>
+            <!-- Center Line -->
+            <line x1="45" y1="925" x2="45" y2="890" stroke="black" stroke-width="2"/>
+
+            <!-- Bypass Valve -->
+            <circle cx="95" cy="910" r="15" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- Incline Line -->
+            <line x1="390" y1="785" x2="375" y2="735" transform="rotate(30 -35 295)" stroke="black" stroke-width="2"/>
+            <line x1="375" y1="772" x2="350" y2="768" transform="rotate(25 -12 210)" stroke="black" stroke-width="2"/>
+
+            <!-- Pump 2-->
+            <!-- Triangle Base -->
+            <polygon points="175,910 155,935 195,935" fill="#fff" stroke="#000" stroke-width="2"/>
+            <!-- Circle -->
+            <circle cx="175" cy="915" r="15" fill="#fff" stroke="#000" stroke-width="2"/>
+            <!-- Rectangle on Circumference -->
+            <rect x="130" y="900" width="40" height="15" transform="rotate(0 50 50)" fill="#fff" stroke="#000" stroke-width="2" />
+            <!-- Inner Circle -->
+            <circle cx="175" cy="914" r="12" fill="#fff" stroke="#fff" stroke-width="2" />
+
+            <!--Line connecting Evaporator To AHU-->
+            <line x1="190" y1="910" x2="300" y2="910" stroke="black" stroke-width="2" stroke-dasharray="5,5"></line>
+            
+            <!--Line Vertical connecting Evaporator To AHU in standbychwp-->
+            <line x1="300" y1="729" x2="300" y2="911" stroke="black" stroke-width="2" stroke-dasharray="5,5"></line>
+            
+        </g>
+
+            `;
+
+            
+          }
+          return svgCode;
+          
+        }
+        
+        // Function to generate Air Handling Unit
+function generateAHUSVG(numAHU, startXAHU, startYAHU, numChillersStandby, numCHWPsStandby) {
+  let svgCode = '';
+  const standbyChillerHeight = 160; // Height of each standby chiller
+  const standbyChwpHeight = 120; // Height of each standby CHWP
+  const standbyChillerStartY = startYChillersStandby; // Y coordinate of the first standby chiller
+  const startYCHWPsStandby = standbyChillerStartY + (numChillersStandby * standbyChillerHeight) + 100; // Calculate the starting Y for standby CHWPs
+  const startYAHUOffset = startYCHWPsStandby + (numCHWPsStandby * standbyChwpHeight) + 20; // Offset for AHU's Y coordinate
+
+  for (let i = 0; i < numAHU; i++) {
+    const currentX = startXAHU;
+    const yOffset = i * 120;
+    const currentY = startYAHU + startYAHUOffset + yOffset;
+    const lineStyle = (i + 1) % 2 === 0 ? 'stroke-dasharray="5,5"' : 'stroke-dasharray="0"';
+    svgCode += `
+    `;
+  }
+  return svgCode;
+}
+
+
+
+
+
+
+
+
+
+
+
+// STARTING ELECTRIC DIALIGAM
+
+
+
+
+
+
+
+
+
+
+
+
+    // Function to generate CWP Pump
+    function generateElectricCwpSVG(numChillers, startXCHWPs, startYChillers) {
+    let svgCode = '';
+    let startX = 10;
+    const ChillerHeight = 90; // Height of each chiller
+    const ChillerStartY = startYChillers; // Y coordinate of the first chiller
+
+    // lines for chillers
+    svgCode += `
+      <line x1="800" y1="50" x2="800" y2="250" stroke="#000" stroke-width="2"/>
+    `;
+
+    for (let i = 0; i < numChillers; i++) {
+        const yOffset = i * 120;
+        const currentY = startYCHWPs + yOffset;
+
+        const xOffset = i * -150;
+        const currentLineX = startX + xOffset;
+
+       
+
+        svgCode += `
+        
+        <!-- Working System-->
+        <line x1="${currentLineX + 640}" y1="250" x2="${currentLineX + 790}" y2="250" stroke="#000" stroke-width="2"/>
+        <!-- Solid vertical line -->
+        <line x1="${currentLineX + 790}" y1="250" x2="${currentLineX + 790}" y2="320" stroke="#000" stroke-width="2"/>
+        <!-- Out line -->
+        <line x1="${currentLineX + 790}" y1="320" x2="${currentLineX + 810}" y2="350" stroke="#000" stroke-width="2"></line>
+        <!-- Round circle -->
+        <circle cx="${currentLineX + 810}" cy="350" r="2" fill="#fff" stroke="#000" stroke-width="2"></circle>
+        <!-- Round circle -->
+        <circle cx="${currentLineX + 790}" cy="360" r="2" fill="#fff" stroke="#000" stroke-width="2"></circle>
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + 790}" y1="360" x2="${currentLineX + 790}" y2="390" stroke="#000" stroke-width="2"></line>
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + 765}" y="390" width="50" height="30" fill="#fff" stroke="#000" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + 775}" y="410" font-family="Arial" font-size="15" fill="#000">MCB</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + 790}" y1="420" x2="${currentLineX + 790}" y2="470" stroke="#000" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + 755}" y="470" width="70" height="30" fill="#fff" stroke="#000" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + 770}" y="490" font-family="Arial" font-size="15" fill="#000">Starter</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + 790}" y1="500" x2="${currentLineX + 790}" y2="560" stroke="#000" stroke-width="2"></line>
+
+        <!-- round circle box -->
+        <circle cx="${currentLineX + 790}" cy="590" r="50" fill="#fff" stroke="#000" stroke-width="2"></circle>
+
+        <!-- TEXT -->
+        <text x="${currentLineX + 770}" y="597" font-family="Arial" font-weight="bold" font-size="15" fill="#000">CWP</text>
+
+        </g>
+        
+        `;
+
+       
+
+    }
+    return svgCode;
+}
+
+
+
+
+
+    // Function to generate Chillers Pump
+    function generateElectricChillersSVG(numChillers, startXCHWPs, startYChillers, numChillers, endYEvaporatorToAHU) {
+    let svgCode = '';
+    let startX = 10;
+    let startXCWP = 10;
+    let currentLineXCWP = 0;
+    
+
+    for (let iCWP = 0; iCWP < numChillers; iCWP++) {
+
+      const xOffsetCWP = iCWP *  -150;
+      currentLineXCWP = startXCWP + xOffsetCWP;
+
+    }
+
+
+    for (let i = 0; i < numChillers; i++) {
+        const currentX = startXCHWPs;
+        const yOffset = i * 120;
+        const currentY = startYCHWPs + yOffset;
+
+        const xOffset = i * - 150;
+        const currentLineX = startX + xOffset;
+
+       
+
+        svgCode += `
+        
+        <!-- Working System-->
+        <line x1="${currentLineX + currentLineXCWP + 640}" y1="250" x2="${currentLineX + currentLineXCWP + 790}" y2="250" stroke="#000" stroke-width="2"/>
+        
+        <!-- Solid vertical line -->
+        <line x1="${currentLineX + currentLineXCWP + 640}" y1="250" x2="${currentLineX + currentLineXCWP + 640}" y2="320" stroke="#000" stroke-width="2"/>
+        
+        <!-- Out line -->
+        <line x1="${currentLineX + currentLineXCWP + 640}" y1="320" x2="${currentLineX + currentLineXCWP + 660}" y2="350" stroke="#000" stroke-width="2"></line>
+        <!-- Round circle -->
+        <circle cx="${currentLineX + currentLineXCWP + 660}" cy="350" r="2" fill="#fff" stroke="#000" stroke-width="2"></circle>
+        <!-- Round circle -->
+        <circle cx="${currentLineX + currentLineXCWP + 640}" cy="360" r="2" fill="#fff" stroke="#000" stroke-width="2"></circle>
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCWP + 640}" y1="360" x2="${currentLineX + currentLineXCWP + 640}" y2="390" stroke="#000" stroke-width="2"></line>
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + currentLineXCWP + 615}" y="390" width="50" height="30" fill="#fff" stroke="#000" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCWP + 625}" y="410" font-family="Arial" font-size="15" fill="#000">MCB</text>
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCWP + 640}" y1="420" x2="${currentLineX + currentLineXCWP + 640}" y2="470" stroke="#000" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + currentLineXCWP + 605}" y="470" width="70" height="30" fill="#fff" stroke="#000" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCWP + 620}" y="490" font-family="Arial" font-size="15" fill="#000">Starter</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCWP + 640}" y1="500" x2="${currentLineX + currentLineXCWP + 640}" y2="560" stroke="#000" stroke-width="2"></line>
+
+        <!-- round circle box -->
+        <circle cx="${currentLineX + currentLineXCWP + 640}" cy="590" r="50" fill="#fff" stroke="#000" stroke-width="2"></circle>
+
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCWP + 597}" y="597" font-family="Arial" font-weight="bold" font-size="15" fill="#000">Compressor</text>
+
+        </g>
+        
+        `;
+
+     
+
+    }
+    return svgCode;
+}
+
+
+
+
+   // Function to generate cooling tower
+   function generateElectricCoolingTowerssSVG(numTowers, numChillers, startXCHWPs, startYChillers, numChillers, endYEvaporatorToAHU) {
+    let svgCode = '';
+    let startX = 10;
+    let startXCWP = 10;
+    let currentLineXCWP = 0;
+    let currentLineX = 0;
+    
+
+    for (let iCWP = 0; iCWP < numChillers; iCWP++) {
+
+      const xOffsetCWP = iCWP *  -150;
+      currentLineXCWP = startXCWP + xOffsetCWP;
+
+    }
+
+    for (let iNChillers = 0; iNChillers < numChillers; iNChillers++) {
+
+        const xOffsetNChillers = iNChillers * - 150;
+        currentLineX = xOffsetNChillers;
+     
+
+    }
+
+
+    for (let i = 0; i < numTowers; i++) {
+
+        const xOffset = i * - 150;
+        const currentLineXCT = startX + xOffset;
+
+       
+
+        svgCode += `
+        
+        <!-- Working System-->
+        <line x1="${currentLineXCT + currentLineX + currentLineXCWP + 490}" y1="250" x2="${currentLineXCT + currentLineX + currentLineXCWP + 640}" y2="250" stroke="#000" stroke-width="2"/>
+        
+        <!-- Solid vertical line -->
+        <line x1="${currentLineXCT + currentLineX + currentLineXCWP + 490}" y1="250" x2="${currentLineXCT + currentLineX + currentLineXCWP + 490}" y2="320" stroke="#000" stroke-width="2"/>
+        
+        <!-- Out line -->
+        <line x1="${currentLineXCT + currentLineX + currentLineXCWP + 490}" y1="320" x2="${currentLineXCT + currentLineX + currentLineXCWP + 510}" y2="350" stroke="#000" stroke-width="2"></line>
+        <!-- Round circle -->
+        <circle cx="${currentLineXCT + currentLineX + currentLineXCWP + 510}" cy="350" r="2" fill="#fff" stroke="#000" stroke-width="2"></circle>
+        <!-- Round circle -->
+        <circle cx="${currentLineXCT + currentLineX + currentLineXCWP + 490}" cy="360" r="2" fill="#fff" stroke="#000" stroke-width="2"></circle>
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineXCT + currentLineX + currentLineXCWP + 490}" y1="360" x2="${currentLineXCT + currentLineX + currentLineXCWP + 490}" y2="390" stroke="#000" stroke-width="2"></line>
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineXCT + currentLineX + currentLineXCWP + 465}" y="390" width="50" height="30" fill="#fff" stroke="#000" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineXCT + currentLineX + currentLineXCWP + 475}" y="410" font-family="Arial" font-size="15" fill="#000">MCB</text>
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineXCT + currentLineX + currentLineXCWP + 490}" y1="420" x2="${currentLineXCT + currentLineX + currentLineXCWP + 490}" y2="470" stroke="#000" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineXCT + currentLineX + currentLineXCWP + 455}" y="470" width="70" height="30" fill="#fff" stroke="#000" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineXCT + currentLineX + currentLineXCWP + 470}" y="490" font-family="Arial" font-size="15" fill="#000">Starter</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineXCT + currentLineX + currentLineXCWP + 490}" y1="500" x2="${currentLineXCT + currentLineX + currentLineXCWP + 490}" y2="560" stroke="#000" stroke-width="2"></line>
+
+        <!-- round circle box -->
+        <circle cx="${currentLineXCT + currentLineX + currentLineXCWP + 490}" cy="590" r="50" fill="#fff" stroke="#000" stroke-width="2"></circle>
+
+        <!-- TEXT -->
+        <text x="${currentLineXCT + currentLineX + currentLineXCWP + 477}" y="597" font-family="Arial" font-weight="bold" font-size="15" fill="#000">CT</text>
+
+
+
+
+        </g>
+        
+        `;
+
+     
+
+    }
+    return svgCode;
+}
+
+
+
+
+
+
+    // Function to generate CHWP Pump
+    function generateElectricChwpSVG(numCHWPs, startXCHWPs, startYChillers) {                                                                                                     
+    let svgCode = '';
+    let startX = 10;
+    const ChillerHeight = 90; // Height of each chiller
+    const ChillerStartY = startYChillers; // Y coordinate of the first chiller
+
+    for (let i = 0; i < numCHWPs; i++) {
+        const yOffset = i * 120;
+        const currentY = startYCHWPs + yOffset;
+
+        const xOffset = i * 150;
+        const currentLineX = startX + xOffset;
+
+       
+
+        svgCode += `
+        
+        <!-- Working System CHWP-->
+        
+        <line x1="${currentLineX + 790}" y1="250" x2="${currentLineX + 940}" y2="250" stroke="#000" stroke-width="2"/>
+        
+        <!-- Solid vertical line -->
+        <line x1="${currentLineX + 940}" y1="250" x2="${currentLineX + 940}" y2="320" stroke="#000" stroke-width="2"/>
+
+        <!-- Out line -->
+        <line x1="${currentLineX + 940}" y1="320" x2="${currentLineX + 960}" y2="350" stroke="#000" stroke-width="2"></line>
+        <!-- Round circle -->
+        <circle cx="${currentLineX + 960}" cy="350" r="2" fill="#fff" stroke="#000" stroke-width="2"></circle>
+
+        <!-- Round circle -->
+        <circle cx="${currentLineX + 940}" cy="360" r="2" fill="#fff" stroke="#000" stroke-width="2"></circle>
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + 940}" y1="360" x2="${currentLineX + 940}" y2="390" stroke="#000" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + 915}" y="390" width="50" height="30" fill="#fff" stroke="#000" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + 925}" y="410" font-family="Arial" font-size="15" fill="#000">MCB</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + 940}" y1="420" x2="${currentLineX + 940}" y2="470" stroke="#000" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + 905}" y="470" width="70" height="30" fill="#fff" stroke="#000" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + 920}" y="490" font-family="Arial" font-size="15" fill="#000">Starter</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + 940}" y1="500" x2="${currentLineX + 940}" y2="560" stroke="#000" stroke-width="2"></line>
+
+        <!-- round circle box -->
+        <circle cx="${currentLineX + 940}" cy="590" r="50" fill="#fff" stroke="#000" stroke-width="2"></circle>
+
+        <!-- TEXT -->
+        <text x="${currentLineX + 920}" y="597" font-family="Arial" font-weight="bold" font-size="15" fill="#000">CHWP</text>
+
+        </g>
+        
+        `;
+
+      
+       
+
+    }
+    return svgCode;
+}
+
+
+
+
+
+// Function to generate stand by chillers cooling towers
+function generateElectricStandByChillersCoolingTowersSVG(numTowersStandby, numCHWPs, startXChillersStandby) {
+    let svgCode = '';
+    let startX = 10;
+    const ChillerHeight = 90; // Height of each chiller
+    const ChillerStartY = startYChillers; // Y coordinate of the first chiller
+    let currentLineXCHWP = 0;
+
+
+    for (let iCHWP = 0; iCHWP < numCHWPs; iCHWP++) {
+
+      const xOffsetCHWP = iCHWP *  150;
+      currentLineXCHWP = startX + xOffsetCHWP;
+
+    }
+
+    for (let i = 0; i < numTowersStandby; i++) {
+        const yOffset = i * 120;
+        const currentY = startYCHWPs + yOffset;
+
+        const xOffset = i * 150;
+        const currentLineX = xOffset;
+
+        svgCode += `
+        
+        <!-- Working System CHWP-->
+        
+        <line x1="${currentLineX + currentLineXCHWP + 940}" y1="250" x2="${currentLineX + currentLineXCHWP + 1090}" y2="250" stroke="#A9A9A9" stroke-width="2"/>
+        
+        <!-- Solid vertical line -->
+        <line x1="${currentLineX + currentLineXCHWP + 1090}" y1="250" x2="${currentLineX + currentLineXCHWP + 1090}" y2="320" stroke="#A9A9A9" stroke-width="2"/>
+
+        <!-- Out line -->
+        <line x1="${currentLineX + currentLineXCHWP + 1090}" y1="320" x2="${currentLineX + currentLineXCHWP + 1110}" y2="350" stroke="#A9A9A9" stroke-width="2"></line>
+        <!-- Round circle -->
+        <circle cx="${currentLineX + currentLineXCHWP + 1110}" cy="350" r="2" fill="#A9A9A9" stroke="#A9A9A9" stroke-width="2"></circle>
+
+        <!-- Round circle -->
+        <circle cx="${currentLineX + currentLineXCHWP + 1090}" cy="360" r="2" fill="#A9A9A9" stroke="#A9A9A9" stroke-width="2"></circle>
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCHWP + 1090}" y1="360" x2="${currentLineX + currentLineXCHWP + 1090}" y2="390" stroke="#A9A9A9" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + currentLineXCHWP + 1065}" y="390" width="50" height="30" fill="#fff" stroke="#A9A9A9" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCHWP + 1075}" y="410" font-family="Arial" font-size="15" fill="#A9A9A9">MCB</text>
+
+        
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCHWP + 1090}" y1="420" x2="${currentLineX + currentLineXCHWP + 1090}" y2="470" stroke="#A9A9A9" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + currentLineXCHWP + 1055}" y="470" width="70" height="30" fill="#fff" stroke="#A9A9A9" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCHWP + 1070}" y="490" font-family="Arial" font-size="15" fill="#A9A9A9">Starter</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCHWP + 1090}" y1="500" x2="${currentLineX + currentLineXCHWP + 1090}" y2="560" stroke="#A9A9A9" stroke-width="2"></line>
+
+        <!-- round circle box -->
+        <circle cx="${currentLineX + currentLineXCHWP + 1090}" cy="590" r="50" fill="#fff" stroke="#A9A9A9" stroke-width="2"></circle>
+
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCHWP + 1076}" y="597" font-family="Arial" font-weight="bold" font-size="15" fill="#A9A9A9">CT</text>
+
+
+        </g>
+        
+        `;
+       
+
+    }
+    return svgCode;
+}
+
+
+
+
+
+
+    // Function to generate stand by chillers
+    function generateElectricStandByChillersSVG(numChillersStandby, numCHWPs, numTowersStandby, startXChillersStandby) {
+    let svgCode = '';
+    let startX = 10;
+    const ChillerHeight = 90; // Height of each chiller
+    const ChillerStartY = startYChillers; // Y coordinate of the first chiller
+    let currentLineXCHWP = 0;
+
+
+    for (let iCHWP = 0; iCHWP < numCHWPs; iCHWP++) {
+
+      const xOffsetCHWP = iCHWP *  150;
+      currentLineXCHWP = startX + xOffsetCHWP;
+
+    }
+
+    for (let iCTowers = 0; iCTowers < numTowersStandby; iCTowers++) {
+
+      const xOffsetCTowers = iCTowers *  150;
+      currentLineXCTowers = xOffsetCTowers;
+
+    }
+
+
+
+    for (let i = 0; i < numChillersStandby; i++) {
+        const yOffset = i * 120;
+        const currentY = startYCHWPs + yOffset;
+
+        const xOffset = i * 150;
+        const currentLineX = xOffset;
+
+        svgCode += `
+        
+        <!-- Working System CHWP-->
+        
+        <line x1="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1090}" y1="250" x2="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1240}" y2="250" stroke="#A9A9A9" stroke-width="2"/>
+        
+        <!-- Solid vertical line -->
+        <line x1="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1240}" y1="250" x2="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1240}" y2="320" stroke="#A9A9A9" stroke-width="2"/>
+
+        <!-- Out line -->
+        <line x1="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1240}" y1="320" x2="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1260}" y2="350" stroke="#A9A9A9" stroke-width="2"></line>
+        <!-- Round circle -->
+        <circle cx="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1260}" cy="350" r="2" fill="#fff" stroke="#A9A9A9" stroke-width="2"></circle>
+
+        <!-- Round circle -->
+        <circle cx="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1240}" cy="360" r="2" fill="#fff" stroke="#A9A9A9" stroke-width="2"></circle>
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1240}" y1="360" x2="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1240}" y2="390" stroke="#A9A9A9" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1215}" y="390" width="50" height="30" fill="#fff" stroke="#A9A9A9" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1225}" y="410" font-family="Arial" font-size="15" fill="#A9A9A9">MCB</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1240}" y1="420" x2="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1240}" y2="470" stroke="#A9A9A9" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1205}" y="470" width="70" height="30" fill="#fff" stroke="#A9A9A9" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1220}" y="490" font-family="Arial" font-size="15" fill="#A9A9A9">Starter</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1240}" y1="500" x2="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1240}" y2="560" stroke="#A9A9A9" stroke-width="2"></line>
+
+        <!-- round circle box -->
+        <circle cx="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1240}" cy="590" r="50" fill="#fff" stroke="#A9A9A9" stroke-width="2"></circle>
+
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCHWP + currentLineXCTowers + 1196}" y="597" font-family="Arial" font-weight="bold" font-size="15" fill="#A9A9A9">Compressor</text>
+
+        </g>
+        
+        `;
+       
+
+    }
+    return svgCode;
+}
+
+
+
+
+
+    // Function to generate stand by cwp
+    function generateElectricStandByCwpSVG(numChillersStandby, numTowersStandby, numCHWPs, startXChillersStandby) {
+    let svgCode = '';
+    let startX = 10;
+    const ChillerHeight = 90; // Height of each chiller
+    const ChillerStartY = startYChillers; // Y coordinate of the first chiller
+    let currentLineXSTANDCHILLERS = 0;
+    let currentLineXCTowers = 0;
+    let currentLineXCHWP = 0;
+
+    
+
+
+    for (let iCTowers = 0; iCTowers < numTowersStandby; iCTowers++) {
+
+        const xOffsetCTowers = iCTowers *  150;
+        currentLineXCTowers = startX + xOffsetCTowers;
+
+    }
+
+    for (let ixOffsetSTANDCHILLERS = 0; ixOffsetSTANDCHILLERS < numChillersStandby; ixOffsetSTANDCHILLERS++) {
+
+         const xOffsetSTANDCHILLERS = ixOffsetSTANDCHILLERS *  150;
+         currentLineXSTANDCHILLERS = xOffsetSTANDCHILLERS;
+
+    }
+
+    for (let iCHWP = 0; iCHWP < numCHWPs; iCHWP++) {
+
+        const xOffsetCHWP = iCHWP *  150;
+        currentLineXCHWP = xOffsetCHWP;
+
+    }
+
+
+    for (let i = 0; i < numChillersStandby; i++) {
+        const yOffset = i * 120;
+        const currentY = startYCHWPs + yOffset;
+
+        const xOffset = i * 150;
+        let currentLineX = xOffset;
+
+        svgCode += `
+        
+        <!-- Working System CHWP-->
+        
+        <line x1="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1240}" y1="250" x2="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1390}" y2="250" stroke="#A9A9A9" stroke-width="2"/>
+        
+        <!-- Solid vertical line -->
+        <line x1="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1390}" y1="250" x2="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1390}" y2="320" stroke="#A9A9A9" stroke-width="2"/>
+
+        <!-- Out line -->
+        <line x1="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1390}" y1="320" x2="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1410}" y2="350" stroke="#A9A9A9" stroke-width="2"></line>
+        <!-- Round circle -->
+        <circle cx="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1410}" cy="350" r="2" fill="#fff" stroke="#A9A9A9" stroke-width="2"></circle>
+
+        <!-- Round circle -->
+        <circle cx="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1390}" cy="360" r="2" fill="#fff" stroke="#A9A9A9" stroke-width="2"></circle>
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1390}" y1="360" x2="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1390}" y2="390" stroke="#A9A9A9" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1365}" y="390" width="50" height="30" fill="#fff" stroke="#A9A9A9" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1375}" y="410" font-family="Arial" font-size="15" fill="#A9A9A9">MCB</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1390}" y1="420" x2="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1390}" y2="470" stroke="#A9A9A9" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1355}" y="470" width="70" height="30" fill="#fff" stroke="#A9A9A9" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1370}" y="490" font-family="Arial" font-size="15" fill="#A9A9A9">Starter</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1390}" y1="500" x2="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1390}" y2="560" stroke="#A9A9A9" stroke-width="2"></line>
+
+        <!-- round circle box -->
+        <circle cx="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1390}" cy="590" r="50" fill="#fff" stroke="#A9A9A9" stroke-width="2"></circle>
+
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCTowers + currentLineXCHWP + currentLineXSTANDCHILLERS + 1376}" y="597" font-family="Arial" font-weight="bold" font-size="15" fill="#A9A9A9">CWP</text>
+
+
+
+        
+        </g>
+        
+        `;
+       
+
+    }
+    return svgCode;
+}
+
+
+
+
+
+
+    // Function to generate stand by chwp
+    function generateElectricStandByChwpSVG(numChillersStandby, numCHWPsStandby, numCHWPs, numTowersStandby, startXChillersStandby) {
+    let svgCode = '';
+    let startX = 10;
+    let currentLineXCHWP = 0;
+    let currentLineXSTANDCHILLERS = 0;
+    let currentLineXCTowers = 0;
+
+
+    for (let iCTowers = 0; iCTowers < numTowersStandby; iCTowers++) {
+
+      const xOffsetCTowers = iCTowers *  150;
+      currentLineXCTowers = startX + xOffsetCTowers;
+
+    }
+
+
+    for (let ixOffsetSTANDCHILLERS = 0; ixOffsetSTANDCHILLERS < numChillersStandby; ixOffsetSTANDCHILLERS++) {
+
+      const xOffsetSTANDCHILLERS = ixOffsetSTANDCHILLERS *  150;
+      currentLineXSTANDCHILLERS = xOffsetSTANDCHILLERS;
+
+    }
+
+    for (let iCHWP = 0; iCHWP < numCHWPs; iCHWP++) {
+
+        const xOffsetCHWP = iCHWP *  150;
+        currentLineXCHWP = xOffsetCHWP;
+
+    }
+
+
+
+    for (let i = 0; i < numCHWPsStandby; i++) {
+        const yOffset = i * 120;
+        const currentY = startYCHWPs + yOffset;
+
+        const xOffset = i * 150;
+        const currentLineX = xOffset;
+
+        svgCode += `
+        
+        <!-- Working System CHWP-->
+        
+        <line x1="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1390}" y1="250" x2="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1540}" y2="250" stroke="#A9A9A9" stroke-width="2"/>
+        
+        <!-- Solid vertical line -->
+        <line x1="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1540}" y1="250" x2="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1540}" y2="320" stroke="#A9A9A9" stroke-width="2"/>
+
+
+        <!-- Out line -->
+        <line x1="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1540}" y1="320" x2="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1560}" y2="350" stroke="#A9A9A9" stroke-width="2"></line>
+        <!-- Round circle -->
+        <circle cx="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1560}" cy="350" r="2" fill="#fff" stroke="#A9A9A9" stroke-width="2"></circle>
+
+        <!-- Round circle -->
+        <circle cx="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1540}" cy="360" r="2" fill="#fff" stroke="#A9A9A9" stroke-width="2"></circle>
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1540}" y1="360" x2="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1540}" y2="390" stroke="#A9A9A9" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1515}" y="390" width="50" height="30" fill="#fff" stroke="#A9A9A9" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1525}" y="410" font-family="Arial" font-size="15" fill="#A9A9A9">MCB</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1540}" y1="420" x2="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1540}" y2="470" stroke="#A9A9A9" stroke-width="2"></line>
+
+        <!-- Outer Rectangle -->
+        <rect x="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1505}" y="470" width="70" height="30" fill="#fff" stroke="#A9A9A9" stroke-width="2" />
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1520}" y="490" font-family="Arial" font-size="15" fill="#A9A9A9">Starter</text>
+
+        <!-- Solid vertical line connecting to MCB -->
+        <line x1="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1540}" y1="500" x2="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1540}" y2="560" stroke="#A9A9A9" stroke-width="2"></line>
+
+        <!-- round circle box -->
+        <circle cx="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1540}" cy="590" r="50" fill="#fff" stroke="#A9A9A9" stroke-width="2"></circle>
+
+        <!-- TEXT -->
+        <text x="${currentLineX + currentLineXCHWP + currentLineXCTowers + currentLineXSTANDCHILLERS + currentLineXSTANDCHILLERS + 1520}" y="597" font-family="Arial" font-weight="bold" font-size="15" fill="#A9A9A9">CHWP</text>
+
+
+        
+        </g>
+        
+        `;
+       
+
+    }
+    return svgCode;
+}
+
+
+
+
+// table code
+
+// Function to generate the HTML table
+function generateTable(numChillers, numCHWPs, numOfCoolingTowerWORKING, numCTTRWORKING, numCCompressorTRWORKING, LPHWORKING, KWWORKING, LPHCHWPWORKING, KWCHWPWORKING, numOfCoolingTowerSTANDBY, numCTTRSTANDBY, numCCompressorTRSTANDBY, LPHSTANDBY, KWSTANDBY, LPHSTANDBYCHWP, KMSTANDBYCHWP, numChillersStandby, numCHWPsStandby) {
+    return `
+
+
+    <h2 style="text-align: center;">Working Results</h2>
+
+
+    <table style="width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">Components</th>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">No of Components</th>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">ṁ</th>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">KW</th>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">TR</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">Cooling Tower</th>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${numOfCoolingTowerWORKING}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">--</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">--</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${numCTTRWORKING}</td>
+        </tr>
+        <tr>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">Compressor</th>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${numChillers}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">--</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">--</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${numCCompressorTRWORKING}</td>
+        </tr>
+        <tr>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">CWP Pump</th>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${numChillers}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${LPHWORKING.toFixed(4)}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${KWWORKING.toFixed(4)}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">--</td>
+        </tr>
+        <tr>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">CHWP Pump</th>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${numCHWPs}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${LPHCHWPWORKING.toFixed(4)}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${KWCHWPWORKING.toFixed(4)}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">--</td>
+        </tr>
+    </tbody>
+</table>
+
+
+
+
+    <h2 style="text-align: center;">Stand By Results</h2>
+
+    <table style="width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">Components</th>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">No of Components</th>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">ṁ</th>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">KW</th>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">TR</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">Cooling Tower</th>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${numOfCoolingTowerSTANDBY}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">--</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">--</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${numCTTRSTANDBY}</td>
+        </tr>
+        <tr>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">Compressor</th>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${numChillersStandby}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">--</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">--</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${numCCompressorTRSTANDBY}</td>
+        </tr>
+        <tr>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">CWP Pump</th>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${numChillersStandby}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${LPHSTANDBY.toFixed(4)}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${KWSTANDBY.toFixed(4)}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">--</td>
+        </tr>
+        <tr>
+            <th style="border: 1px solid black; padding: 8px; text-align: center;">CHWP Pump</th>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${numCHWPsStandby}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${LPHSTANDBYCHWP.toFixed(4)}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">${KMSTANDBYCHWP.toFixed(4)}</td>
+            <td style="border: 1px solid black; padding: 8px; text-align: center;">--</td>
+        </tr>
+    </tbody>
+</table>
+
+
+
+    `;
+}
+
+
+
+  </script>
+</body>
+</html>
+
